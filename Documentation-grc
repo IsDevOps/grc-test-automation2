@@ -1,0 +1,24 @@
+Build the Docker image using the following command:
+-	docker build -t simple-node-app .
+
+Authenticate Docker with GCR:
+-	gcloud auth activate-service-account --key-file=/path/to/your/key.json
+-	gcloud auth configure-docker
+
+Tag the Docker image:
+-	docker tag local-image gcr.io/service-account-name/your-repo/my-image:tag
+
+Push the Docker image to GCR:
+-	docker push gcr.io/service-account-name/my-repo/your-image:tag
+
+
+
+NOTE: make sure your docker is not running on sudo 
+
+Your can grant sudo permission:
+
+-	sudo usermod -aG docker $USER
+
+Restart your pc after running the command
+
+

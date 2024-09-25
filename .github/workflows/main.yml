@@ -1,0 +1,70 @@
+name: Build and Push Docker Image to GCR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: ${{secrets.GCR_PROJECT_ID}}
+          service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+
+      - name: Configure Docker to use GCR
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Add user to Docker group
+        run: sudo usermod -aG docker $USER
+
+      - name: Build and tag Docker image
+        run: |
+          docker build -t us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest .
+          docker tag us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest
+
+      - name: Push Docker image to GCR
+        run: |
+          docker push us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest
+
+  # Add a separate job for production deployment with manual approval
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: build  # Depends on the build job completion
+    environment: production
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy test \
+            --image us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated
