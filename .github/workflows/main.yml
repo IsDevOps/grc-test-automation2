@@ -46,7 +46,7 @@ jobs:
           docker build -t us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest .
           docker tag us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest
 
-      - name: Push Dockers image to GCR
+      - name: Push Docker image to GCR
         run: |
           docker push us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest
 
