@@ -62,7 +62,7 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
 
-      - name: Deploy to Cloud Run
+      - name: Deploys to Cloud Run
         run: |
           gcloud run deploy test \
             --image us-central1-docker.pkg.dev/${{secrets.GCR_PROJECT_ID}}/${{secrets.GCR_REPO_NAME}}/test:latest \
